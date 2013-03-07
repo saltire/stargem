@@ -1,11 +1,13 @@
-if __FILE__ == $0
-  require 'adventure'
-  
-  adv = Adventure.new('starflight.json')
-  
-  while true
-    print '> '
-    status = adv.do_command(gets.chomp)
-    puts status
-  end
+require 'adventure'
+ 
+
+adv = Adventure.new('starflight.json')
+
+command = ''
+while true
+  status = adv.do_command(command)
+  puts status
+
+  print '> '
+  command = gets.chomp
 end

@@ -1,6 +1,6 @@
 require 'json'
 
-#require 'game'
+require 'game'
 
 
 class Adventure
@@ -11,26 +11,16 @@ class Adventure
     @controls = data['controls']
     @messages = data['messages']
     
-    #@game = Game(data, state)
+    @game = Game.new(data, state)
     
     @synonyms = Hash.new([])
       
-    add_to_synonyms
-      
-    data['words'].each do |words|
-      words.each do |word|
-        @synonyms[word] = @synonyms[word] | words
-      end
+    def add_to_synonyms(words)
+      words.each {|word| @synonyms[word] = @synonyms[word] | words}
     end
     
-    data['nouns'].each do |noun|
-      words = noun['words']
-      words.each do |word|
-        @synonyms[word] = @synonyms[word] | words
-      end
-    end
-    
-    puts @synonyms
+    data['words'].each {|words| add_to_synonyms(words)}
+    data['nouns'].each {|nid, noun| add_to_synonyms(noun['words']) if noun['words']}
       
   end
   

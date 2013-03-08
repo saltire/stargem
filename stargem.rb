@@ -5,8 +5,8 @@ adv = Adventure.new('starflight.json')
 
 command = ''
 while true
-  status = adv.do_command(command)
-  puts status
+  output = adv.do_command(command)
+  #puts output
 
   print '> '
   command = gets.chomp

@@ -5,7 +5,7 @@ require 'room'
 
 
 class Game
-  attr_reader :controls
+  attr_reader :controls, :vars, :nouns, :rooms, :current_room
   
   def initialize(path)
     data = File.open(path, 'rb') {|file| JSON.parse(file.read) }
@@ -28,7 +28,7 @@ class Game
     @synonyms = Hash.new([])
     data['words'].each {|words| add_to_synonyms(words)}
     data['nouns'].each {|nid, noun| add_to_synonyms(noun['words']) if noun['words']}
+      
+    @current_room = @rooms.select {|rid, room| room.is_start?}.values.first
   end
 end
-
-

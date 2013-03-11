@@ -1,4 +1,6 @@
 class Room
+  attr_reader :id
+  
   def initialize(rid, rdata)
     @id = rid
     @data = rdata

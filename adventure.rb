@@ -17,6 +17,7 @@ class Adventure
   
   def do_command(command)
     actions = get_command_actions(command)
+    p actions
     @turns << [command, actions]
     
   end
@@ -97,8 +98,24 @@ class Adventure
     
   def cond_is_true?(cond)
     method, *params = cond.split
+    method, neg = method[0] == '!' ? [method[1..-1], true] : [method, false]
+    
     #p method, params, self.send(method + '?', *params)
-    self.send method + '?', *params
+    self.send(method + '?', *params) ^ neg
+  end
+  
+  
+  def match_word(iword, word)
+    word == '*' || word.split('|').any? {|w| @game.synonyms[w].include? iword}
+  end
+  
+  def match_nouns(nword)
+    if /%(\d+)/.match(nword)
+      # substitute numbered wildcard for that word in command
+      @game.nouns_by_name(@words[$1.to_i])
+    else
+      nword.split(',').map {|nid| @game.nouns[nid]}
+    end
   end
   
 end

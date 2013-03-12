@@ -5,7 +5,7 @@ module Tests
   end
   
   def input?(*words)
-    @words.each_with_index {|word, i| words[i] == word}.all?
+    words.each_with_index.map {|word, i| @words[i] && match_word(@words[i], word)}.all?
   end
   
   def var?(vid, value)

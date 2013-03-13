@@ -27,27 +27,27 @@ module Tests
   end
   
   def exitexists?(dir)
-    @game.current_room.exits.any? {|exitdir, exit| match_word(dir, exitdir)}
+    @game.current_room.exits.any? {|exitdir, dest| match_word(dir, exitdir)}
   end
   
   def carrying?
-    @game.nouns.any? {|nid, noun| noun.locs.include? :inventory}
+    !nouns_at_loc(:inventory).empty?
   end
     
   def nounloc?(nword, rword)
-    match_nouns(nword).any? {|noun| rword.split('|').any? {|rid| noun.locs.include? rid}}
+    match_nouns(nword).any? {|noun| rword.split('|').any? {|rid| noun_at? noun.id, rid}}
   end
   
   def ininv?(nword)
-    match_nouns(nword).any? {|noun| noun.locs.include? :inventory}
+    match_nouns(nword).any? {|noun| noun_at? noun.id, :inventory}
   end
   
   def worn?(nword)
-    match_nouns(nword).any? {|noun| noun.locs.include? :worn}
+    match_nouns(nword).any? {|noun| noun_at? noun.id, :worn}
   end
   
   def inroom?(nword)
-    match_nouns(nword).any? {|noun| noun.locs.include? @game.current_room.id}
+    match_nouns(nword).any? {|noun| noun_at? noun.id, @game.current_room.id}
   end
   
   def present?(nword)
@@ -55,11 +55,11 @@ module Tests
   end
   
   def contained?(nword)
-    match_nouns(nword).any? {|noun| !(noun.locs & @game.nouns.keys).empty?}
+    match_nouns(nword).any? {|noun| !(noun_locs(noun.id) & @game.nouns.keys).empty?}
   end
   
   def somewhere?(nword)
-    match_nouns(nword).any? {|noun| !noun.locs.empty?}
+    match_nouns(nword).any? {|noun| !noun_locs(noun.id).empty?}
   end
   
   def movable?(nword)
@@ -79,7 +79,7 @@ module Tests
   end
   
   def hascontents?(oword)
-    match_objects(oword).any? {|obj| !@game.nouns_by_loc(obj.id).empty?}
+    match_objects(oword).any? {|obj| !@game.nouns_at_loc(obj.id).empty?}
   end
   
   def random(percent)

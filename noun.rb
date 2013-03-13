@@ -1,5 +1,5 @@
 class Noun
-  attr_reader :id, :description, :notes, :locs, :words
+  attr_reader :id, :description, :notes, :words
   
   def initialize(nid, ndata)
     @id = nid
@@ -7,8 +7,11 @@ class Noun
     
     @description = @data['desc'] || ''
     @notes = @data['notes'] || []
-    @locs = @data['locs'] || []
     @words = @data['words'] || []
+  end
+  
+  def initial_locs
+    @data['locs'] || []
   end
   
   def movable?

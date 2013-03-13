@@ -612,7 +612,7 @@
         [
             {
                 "if": ["start"], 
-                "then": ["message intro1", "message intro2", "message intro3", "pause", "message intro4", "showdesc", "shownotes", "showcontents"], 
+                "then": ["message intro1", "message intro2", "message intro3", "pause", "message intro4", "showdesc %ROOM", "shownotes %ROOM", "showcontents %ROOM itemcontains 0"], 
                 "done": true
             }, 
             {
@@ -1351,7 +1351,7 @@
             }, 
             {
                 "if": ["input look"], 
-                "then": ["showdesc", "shownotes", "showcontents %current_room itemcontains 0"], 
+                "then": ["showdesc %ROOM", "shownotes %ROOM", "showcontents %ROOM itemcontains 0"], 
                 "done": true
             }, 
             {
@@ -1359,7 +1359,7 @@
                 "then": [
                     {
                         "if": ["exitexists %2"], 
-                        "then": ["move %2", "showdesc", "shownotes", "showcontents"], 
+                        "then": ["move %2", "showdesc %ROOM", "shownotes %ROOM", "showcontents %ROOM itemcontains 0"], 
                         "done": true
                     }, 
                     "message cantgo"

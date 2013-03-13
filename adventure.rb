@@ -16,9 +16,11 @@ class Adventure
   
   
   def do_command(command)
+    @output = []
     actions = get_command_actions(command)
     p actions
-    @turns << [command, actions]
+    p @output
+    @turns << [command, actions, @output]
     
   end
   
@@ -129,6 +131,28 @@ class Adventure
     else
       nword.split(',').map {|nid| @game.nouns[nid]}
     end
+  end
+  
+  
+  def match_objects(oword)
+    if oword == '%ROOM'
+      [@game.current_room.to_a]
+    else
+      match_nouns(oword) || [@game.rooms[oword]]
+    end
+  end
+  
+  
+  def queue_output(*messages)
+    @output += messages.each do |msg|
+      msg.gsub! /%VAR\((.+)\)/, @game.vars[$1]
+      msg.gsub! '%TURNS', @turns.length
+    end
+  end
+  
+  
+  def queue_message(*mids)
+    queue_output mids.map {|mid| @messages[mid]}
   end
   
 end

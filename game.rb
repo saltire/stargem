@@ -29,7 +29,7 @@ class Game
     @current_room = @rooms.select {|rid, room| room.is_start?}.values.first
       
     @locations = @nouns.reduce(Set.new) do |locmap, (nid, noun)|
-      locmap + noun.initial_locs.map {|loc| [nid, loc]}
+      locmap + noun.locs.map {|loc| [nid, loc]}
     end
     
     # word synonyms
@@ -57,16 +57,16 @@ class Game
     @nouns.values.select {|noun| !(noun.words & nwords).empty?}
   end
   
-  def noun_locs(nid)
-    @locations.select {|(nid_, oid)| nid == nid_}.map {|(nid, oid)| oid}
+  def noun_locs(noun)
+    @locations.select {|(nid, oid)| noun.id == nid}.map {|(nid, oid)| oid}
   end
   
   def nouns_at_loc(*oids)
     @locations.select {|(nid_, oid)| oids.include? oid}.map {|(nid, oid)| @nouns[nid]}
   end
   
-  def noun_at?(nid, *oids)
-    !(noun_locs(nid) & oids).empty?
+  def noun_at?(noun, *oids)
+    !(noun_locs(noun) & oids).empty?
   end
   
   def nouns_present
@@ -80,11 +80,11 @@ class Game
   # noun actions
   
   def add_noun(noun, *oids)
-    oids.each {|loc| @locations << [noun.id, oid]}
+    oids.each {|oid| @locations << [noun.id, oid]}
   end
   
   def remove_noun(noun, *oids)
-    oids.each {|loc| @locations.delete [noun.id, oid]}
+    oids.each {|oid| @locations.delete [noun.id, oid]}
   end
   
   def destroy_noun(noun)

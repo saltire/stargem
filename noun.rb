@@ -1,24 +1,28 @@
 class Noun
-  attr_reader :id, :description, :notes, :words
+  attr_reader :id, :name, :desc, :shortname, :shortdesc, :notes, :words, :locs
+  attr_writer :desc, :notes
   
   def initialize(nid, ndata)
     @id = nid
     @data = ndata
     
-    @description = @data['desc'] || ''
-    @notes = @data['notes'] || []
-    @words = @data['words'] || []
-  end
-  
-  def initial_locs
-    @data['locs'] || []
+    def add_vars(vars, default)
+      vars.each {|var| instance_variable_set "@#{var}", @data[var] || default}
+    end
+        
+    add_vars %w(name desc shortname shortdesc), ''
+    add_vars %w(notes words locs), []
   end
   
   def movable?
-    @data['movable'] == true
+    !!@data['movable']
   end
   
   def wearable?
-    @data['wearable'] == true
+    !!@data['wearable']
+  end
+  
+  def visible?
+    !!@data['visible']
   end
 end

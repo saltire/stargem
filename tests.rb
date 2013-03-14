@@ -31,23 +31,23 @@ module Tests
   end
   
   def carrying?
-    !nouns_at_loc(:inventory).empty?
+    !@game.nouns_at_loc(:inventory).empty?
   end
     
   def nounloc?(nword, rword)
-    match_nouns(nword).any? {|noun| rword.split('|').any? {|rid| noun_at? noun.id, rid}}
+    match_nouns(nword).any? {|noun| rword.split('|').any? {|rid| @game.noun_at? noun, rid}}
   end
   
   def ininv?(nword)
-    match_nouns(nword).any? {|noun| noun_at? noun.id, :inventory}
+    match_nouns(nword).any? {|noun| @game.noun_at? noun, :inventory}
   end
   
   def worn?(nword)
-    match_nouns(nword).any? {|noun| noun_at? noun.id, :worn}
+    match_nouns(nword).any? {|noun| @game.noun_at? noun, :worn}
   end
   
   def inroom?(nword)
-    match_nouns(nword).any? {|noun| noun_at? noun.id, @game.current_room.id}
+    match_nouns(nword).any? {|noun| @game.noun_at? noun, @game.current_room.id}
   end
   
   def present?(nword)
@@ -55,11 +55,11 @@ module Tests
   end
   
   def contained?(nword)
-    match_nouns(nword).any? {|noun| !(noun_locs(noun.id) & @game.nouns.keys).empty?}
+    match_nouns(nword).any? {|noun| !(@game.noun_locs(noun) & @game.nouns.keys).empty?}
   end
   
   def somewhere?(nword)
-    match_nouns(nword).any? {|noun| !noun_locs(noun.id).empty?}
+    match_nouns(nword).any? {|noun| !@game.noun_locs(noun).empty?}
   end
   
   def movable?(nword)
@@ -71,7 +71,7 @@ module Tests
   end
   
   def hasdesc?(oword)
-    match_objects(oword).any? {|obj| obj.description != ''}
+    match_objects(oword).any? {|obj| obj.desc != ''}
   end
   
   def hasnotes?(oword)

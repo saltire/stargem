@@ -1,21 +1,25 @@
 class Room
-  attr_reader :id, :description, :notes, :exits
+  attr_reader :id, :name, :desc, :notes, :exits
+  attr_writer :description, :notes
   
   def initialize(rid, rdata)
     @id = rid
     @data = rdata
     
-    @description = @data['desc'] || ''
-    @notes = @data['desc'] || []
-    @exits = @data['exits'] || []
+    def add_vars(vars, default)
+      vars.each {|var| instance_variable_set "@#{var}", @data[var] || default}
+    end
+        
+    add_vars %w(name desc), ''
+    add_vars %w(notes exits), []
   end
   
   def is_start?
-    @data['start'] == true
+    !!@data['start']
   end
   
   def visited?
-    @visited == true
+    !!@visited
   end
 
   def visit

@@ -1,4 +1,3 @@
-require 'json'
 require 'set'
 
 require 'noun'
@@ -6,42 +5,28 @@ require 'room'
 
 
 class Game
-  attr_reader :controls, :messages, :vars, :nouns, :rooms, :current_room, :synonyms
+  attr_reader :vars, :nouns, :rooms, :current_room, :turns
   
-  def initialize(path)
-    data = File.open(path, 'rb') {|file| JSON.parse(file.read) }
-    
-    @controls = data['controls']
-    @messages = data['messages']
-      
-    # var, noun and room arrays
-    
+  def initialize(var_data, noun_data, room_data)
     def store_data(data_hash)
       data_hash.each_with_object({}) {|(id, dat), objs| objs[id] = yield(id, dat)}
     end
     
-    @vars = store_data(data['vars']) {|vid, val| val.to_i}
-    @nouns = store_data(data['nouns']) {|nid, ndata| Noun.new(nid, ndata)}
-    @rooms = store_data(data['rooms']) {|rid, rdata| Room.new(rid, rdata)}
+    @vars = store_data(var_data) {|vid, val| val.to_i}
+    @nouns = store_data(noun_data) {|nid, ndata| Noun.new(nid, ndata)}
+    @rooms = store_data(room_data) {|rid, rdata| Room.new(rid, rdata)}
       
-    # player and noun locations
-    
     @current_room = @rooms.select {|rid, room| room.is_start?}.values.first
       
     @locations = @nouns.reduce(Set.new) do |locmap, (nid, noun)|
       locmap + noun.locs.map {|loc| [nid, loc]}
     end
     
-    # word synonyms
-
-    def add_to_synonyms(words)
-      words.each {|word| @synonyms[word] = @synonyms[word] | words}
-    end
-    
-    @synonyms = Hash.new([])
-    data['words'].each {|words| add_to_synonyms(words)}
-    data['nouns'].values.each {|noun| add_to_synonyms(noun['words']) if noun['words']}
-      
+    @turns = []
+  end
+  
+  def save_turn(command, actions, output)
+    @turns << [command, actions, output]
   end
   
   # room actions
@@ -69,10 +54,6 @@ class Game
     !(noun_locs(noun) & oids).empty?
   end
   
-  def nouns_present
-    nouns_at_loc(@current_room.id, :inventory, :worn)
-  end
-  
   def has_contents?(*oids)
     !nouns_at_loc(*oids).empty?
   end
@@ -94,6 +75,12 @@ class Game
   def move_noun(noun, *oids)
     destroy_noun(noun)
     add_noun(noun, *oids)
+  end
+  
+  # var actions
+  
+  def set_var(vid, value)
+    @vars[vid] = value
   end
   
 end

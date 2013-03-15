@@ -98,7 +98,7 @@ module Actions
   end
   
   def setnoundesc(nword, mid)
-    match_nouns(nword).each {|noun| noun.desc = @game.messages[mid]}
+    match_nouns(nword).each {|noun| noun.desc = @messages[mid]}
   end
   
   def addnounnote(nword, mid)
@@ -114,7 +114,7 @@ module Actions
   end
   
   def setroomdesc(rword, mid)
-    rword.split(',').each {|room| room.desc = @game.messages[mid]}
+    rword.split(',').each {|room| room.desc = @messages[mid]}
   end
   
   def addroomnote(rword, mid)
@@ -130,12 +130,12 @@ module Actions
   end
   
   def setvar(vid, value)
-    @game.vars[vid] = value
+    @game.set_var vid, value
   end
   
   def adjustvar(vid, value)
     if ['+', '-', '*', '/'].include? value[0]
-      @game.vars[vid] = @game.vars[vid].send(value[0], value[1..-1].to_i)
+      @game.set_var vid, @game.vars[vid].send(value[0], value[1..-1].to_i)
     end
   end
 

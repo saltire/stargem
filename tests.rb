@@ -1,11 +1,11 @@
 module Tests
   
   def start?
-    @turns.length == 0
+    @game.turns.length == 0
   end
   
   def input?(*words)
-    words.each_with_index.map {|word, i| @words[i] && match_word(@words[i], word)}.all?
+    words.each_with_index.all? {|word, i| @words[i] && match_word(@words[i], word)}
   end
   
   def var?(vid, value)
@@ -15,7 +15,7 @@ module Tests
       end
     end
     # no operator: assume ==
-    @game.vars['vid'] == value.to_i
+    @game.vars[vid] == value.to_i
   end
   
   def room?(rword)
@@ -23,7 +23,7 @@ module Tests
   end
   
   def visited?(rword)
-    rword.split('|').any? {|rid| @game.rooms['rid'].visited?}
+    rword.split('|').any? {|rid| @game.rooms[rid].visited?}
   end
   
   def exitexists?(dir)
@@ -51,7 +51,7 @@ module Tests
   end
   
   def present?(nword)
-    !(match_nouns(nword) & @game.nouns_present).empty?
+    match_nouns(nword).any? {|noun| @game.noun_at? noun, @game.current_room.id, :inventory, :worn}
   end
   
   def contained?(nword)

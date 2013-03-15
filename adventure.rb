@@ -1,5 +1,6 @@
-require 'game'
+require 'json'
 
+require 'game'
 require 'tests'
 require 'actions'
 
@@ -9,20 +10,30 @@ class Adventure
   include Actions
 
   def initialize(path)
-    @game = Game.new(path)
-    @turns = []
+    data = File.open(path, 'rb') {|file| JSON.parse(file.read) }
+    
+    @controls = data['controls']
+    @messages = data['messages']
       
+    def add_to_synonyms(words)
+      words.each {|word| @synonyms[word] = @synonyms[word] | words}
+    end
+    
+    @synonyms = Hash.new([])
+    data['words'].each {|words| add_to_synonyms(words)}
+    data['nouns'].values.each {|noun| add_to_synonyms(noun['words']) if noun['words']}
+      
+    @game = Game.new(data['vars'], data['nouns'], data['rooms'])
   end
   
   
   def do_command(command)
     @output = []
     actions = get_command_actions(command)
-    p actions
     actions.each {|(action, params)| send action, *params}
 
     p @output
-    @turns << [command, actions, @output]
+    @game.save_turn command, actions, @output
     
   end
   
@@ -31,7 +42,7 @@ class Adventure
     @words = command.split.reject {|word| %w(the an a).include? word}
     actions = []
 
-    @game.controls.each do |cset|
+    @controls.each do |cset|
       # get all actions in the set
       cset.each do |control|
         done = false
@@ -40,8 +51,8 @@ class Adventure
           case action
           when :replace then return get_command_actions(sub_input_words(params))
           when :gameover then return actions
-          when :done then done = true
-          else actions << [action, params]
+          when :done then done = true; break
+          else actions << [action, params]; p [action, params]
           end
         end
         break if done
@@ -65,7 +76,7 @@ class Adventure
       control['then'].each do |action|
         if action.is_a? Hash
           # this is another cond block, so get append actions from it recursively
-          actions.concat get_control_actions(action)
+          actions += get_control_actions(action)
         else
           # append action and parameters
           action, params = action.split(' ', 2)
@@ -121,17 +132,19 @@ class Adventure
   
   def match_word(cword, words)
     words == '*' || words.split('|').any? do |word|
-      @game.synonyms[word].include? sub_input_words(cword)
+      @synonyms[word].include? sub_input_words(cword)
     end
   end
 
     
   def match_nouns(nword)
-    if /%(\d+)/.match(nword)
-      # substitute numbered wildcard for that word in command
-      @game.nouns_by_name(@words[$1.to_i - 1])
-    else
-      nword.split(',').map {|nid| @game.nouns[nid]}
+    nword.split(',').reduce([]) do |nouns, nid|
+      if /%(\d+)/.match(nid)
+        # substitute numbered wildcard for that word in command
+        nouns + @game.nouns_by_name(@words[$1.to_i - 1])
+      else
+        nouns << @game.nouns[nid]
+      end
     end
   end
   
@@ -149,14 +162,15 @@ class Adventure
     @output += messages.each do |msg|
       unless msg == :pause
         msg.gsub!(/%VAR\((.+)\)/) {|m| @game.vars[$1]}
-        msg.gsub! '%TURNS', @turns.length.to_s
+        msg.gsub! '%TURNS', @game.turns.length.to_s
+        sub_input_words msg
       end
     end
   end
   
   
   def queue_message(*mids)
-    queue_output *mids.map {|mid| @game.messages[mid]}
+    queue_output *mids.map {|mid| @messages[mid]}
   end
   
 end

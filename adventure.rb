@@ -6,57 +6,60 @@ require 'actions'
 
 
 class Adventure
-  include Tests
-  include Actions
-
   def initialize(path)
     data = File.open(path, 'rb') {|file| JSON.parse(file.read) }
     
     @controls = data['controls']
-    @messages = data['messages']
-      
-    def add_to_synonyms(words)
-      words.each {|word| @synonyms[word] = @synonyms[word] | words}
-    end
     
-    @synonyms = Hash.new([])
-    data['words'].each {|words| add_to_synonyms(words)}
-    data['nouns'].values.each {|noun| add_to_synonyms(noun['words']) if noun['words']}
-      
-    @game = Game.new(data['vars'], data['nouns'], data['rooms'])
+    @game = Game.new data
+    @tests = Tests.new @game
+    @actions = Actions.new @game
   end
   
   
   def do_command(command)
-    @output = []
-    actions = get_command_actions(command)
-    actions.each {|(action, params)| send action, *params}
-
-    p @output
-    @game.save_turn command, actions, @output
-    
+    @game.start_turn(command)
+    actions = do_command_actions(command)
+    output = @game.end_turn actions
   end
   
   
-  def get_command_actions(command)
-    @words = command.split.reject {|word| %w(the an a).include? word}
+  def do_command_actions(command)
+    @game.set_words(command)
     actions = []
-
+      
     @controls.each do |cset|
-      # get all actions in the set
+      csactions = []
+
       cset.each do |control|
         done = false
         get_control_actions(control).each do |action, params|
           # add actions to the queue, testing for special conditions
           case action
-          when :replace then return get_command_actions(sub_input_words(params))
-          when :gameover then return actions
-          when :done then done = true; break
-          else actions << [action, params]; p [action, params]
+          when :replace
+            print '-----REPLACING WITH: '
+            puts @game.sub_input_words(params)
+            return do_command_actions(@game.sub_input_words(params))
+          #when :replace then return get_command_actions(@game.sub_input_words(params))
+          when :gameover
+            done = true
+            @game.end_game
+            break
+          when :done
+            done = true
+            break
+          else
+            csactions << [action, params]
+            actions << [action, params]
+            p [action, params]
           end
         end
         break if done
       end
+      
+      # execute actions for this control set
+      csactions.each {|(action, params)| @actions.send action, *params}
+      break if @game.gameover
     end
     
     actions
@@ -120,57 +123,13 @@ class Adventure
     method, *params = cond.split
     method, neg = method[0] == '!' ? [method[1..-1], true] : [method, false]
     
-    puts send(method + '?', *params) ^ neg
-    send(method + '?', *params) ^ neg
+    puts @tests.send(method + '?', *params) ^ neg
+    @tests.send(method + '?', *params) ^ neg
   end
   
   
-  def sub_input_words(phrase)
-    phrase.gsub(/%(\d+)/) {|index| @words[index.to_i - 1] || ''}
-  end
-  
-  
-  def match_word(cword, words)
-    words == '*' || words.split('|').any? do |word|
-      @synonyms[word].include? sub_input_words(cword)
-    end
-  end
-
-    
-  def match_nouns(nword)
-    nword.split(',').reduce([]) do |nouns, nid|
-      if /%(\d+)/.match(nid)
-        # substitute numbered wildcard for that word in command
-        nouns + @game.nouns_by_name(@words[$1.to_i - 1])
-      else
-        nouns << @game.nouns[nid]
-      end
-    end
-  end
-  
-  
-  def match_objects(oword)
-    if oword == '%ROOM'
-      [@game.current_room]
-    else
-      match_nouns(oword) || [@game.rooms[oword]]
-    end
-  end
-  
-  
-  def queue_output(*messages)
-    @output += messages.each do |msg|
-      unless msg == :pause
-        msg.gsub!(/%VAR\((.+)\)/) {|m| @game.vars[$1]}
-        msg.gsub! '%TURNS', @game.turns.length.to_s
-        sub_input_words msg
-      end
-    end
-  end
-  
-  
-  def queue_message(*mids)
-    queue_output *mids.map {|mid| @messages[mid]}
+  def game_over?
+    @game.gameover
   end
   
 end

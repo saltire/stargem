@@ -1,11 +1,15 @@
-module Tests
+class Tests
+  
+  def initialize(game)
+    @game = game
+  end
   
   def start?
-    @game.turns.length == 0
+    @game.turn_number == 1
   end
   
   def input?(*words)
-    words.each_with_index.all? {|word, i| @words[i] && match_word(@words[i], word)}
+    @game.input_match? words
   end
   
   def var?(vid, value)
@@ -27,7 +31,7 @@ module Tests
   end
   
   def exitexists?(dir)
-    @game.current_room.exits.any? {|exitdir, dest| match_word(dir, exitdir)}
+    @game.current_room.exits.any? {|exitdir, dest| @game.words_match?(dir, exitdir)}
   end
   
   def carrying?
@@ -35,51 +39,51 @@ module Tests
   end
     
   def nounloc?(nword, rword)
-    match_nouns(nword).any? {|noun| rword.split('|').any? {|rid| @game.noun_at? noun, rid}}
+    @game.match_nouns(nword).any? {|noun| rword.split('|').any? {|rid| @game.noun_at? noun, rid}}
   end
   
   def ininv?(nword)
-    match_nouns(nword).any? {|noun| @game.noun_at? noun, :inventory}
+    @game.match_nouns(nword).any? {|noun| @game.noun_at? noun, :inventory}
   end
   
   def worn?(nword)
-    match_nouns(nword).any? {|noun| @game.noun_at? noun, :worn}
+    @game.match_nouns(nword).any? {|noun| @game.noun_at? noun, :worn}
   end
   
   def inroom?(nword)
-    match_nouns(nword).any? {|noun| @game.noun_at? noun, @game.current_room.id}
+    @game.match_nouns(nword).any? {|noun| @game.noun_at? noun, @game.current_room.id}
   end
   
   def present?(nword)
-    match_nouns(nword).any? {|noun| @game.noun_at? noun, @game.current_room.id, :inventory, :worn}
+    @game.match_nouns(nword).any? {|noun| @game.noun_at? noun, @game.current_room.id, :inventory, :worn}
   end
   
   def contained?(nword)
-    match_nouns(nword).any? {|noun| !(@game.noun_locs(noun) & @game.nouns.keys).empty?}
+    @game.match_nouns(nword).any? {|noun| !(@game.noun_locs(noun) & @game.nouns.keys).empty?}
   end
   
   def somewhere?(nword)
-    match_nouns(nword).any? {|noun| !@game.noun_locs(noun).empty?}
+    @game.match_nouns(nword).any? {|noun| !@game.noun_locs(noun).empty?}
   end
   
   def movable?(nword)
-    match_nouns(nword).any? {|noun| noun.movable?}
+    @game.match_nouns(nword).any? {|noun| noun.movable?}
   end
   
   def wearable?(nword)
-    match_nouns(nword).any? {|noun| noun.wearable?}
+    @game.match_nouns(nword).any? {|noun| noun.wearable?}
   end
   
   def hasdesc?(oword)
-    match_objects(oword).any? {|obj| obj.desc != ''}
+    @game.match_objects(oword).any? {|obj| obj.desc != ''}
   end
   
   def hasnotes?(oword)
-    match_objects(oword).any? {|obj| !obj.notes.empty?}
+    @game.match_objects(oword).any? {|obj| !obj.notes.empty?}
   end
   
   def hascontents?(oword)
-    match_objects(oword).any? {|obj| !@game.nouns_at_loc(obj.id).empty?}
+    @game.match_objects(oword).any? {|obj| !@game.nouns_at_loc(obj.id).empty?}
   end
   
   def random(percent)
